@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#__next,
+#root {
+  background-color: #f7f9fc !important;
+  background-image: linear-gradient(180deg, #ffffff 0%, #edf1f8 40%, #e3e8f2 100%) !important;
+  color: #0f172a;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+.glass-panel,
+.glass-soft {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+
+.landing-swiper {
+  padding-bottom: 24px;
+}
+
+.landing-swiper .swiper-slide {
+  display: flex;
+  justify-content: center;
+  width: 100% !important;
+}
+
+.language-card {
+  min-height: 280px;
+}
+
+.landing-swiper .swiper-pagination-bullet {
+  background: #94a3b8;
+  opacity: 1;
+}
+
+.landing-swiper .swiper-pagination-bullet-active {
+  background: #2563eb;
+}
