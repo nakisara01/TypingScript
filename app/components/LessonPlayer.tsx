@@ -11,6 +11,7 @@ import LessonNavigator from "./LessonNavigator";
 import CourseProgressSummary from "./CourseProgressSummary";
 import CourseCompletionSummary from "./CourseCompletionSummary";
 import CodeDisplay from "./CodeDisplay";
+import CodeDiffView from "./CodeDiffView";
 
 type LessonPlayerProps = {
   lessons: Lesson[];
@@ -42,6 +43,7 @@ export default function LessonPlayer({
   const [hasHydrated, setHasHydrated] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState<number | null>(null);
   const [mobilePanel, setMobilePanel] = useState<"editor" | "preview">("editor");
+  const [showDiff, setShowDiff] = useState(false);
 
   useEffect(() => {
     if (hasHydrated) {
@@ -126,6 +128,10 @@ export default function LessonPlayer({
   const typedCode = currentLesson
     ? typedEntries[currentLesson.id] ?? ""
     : "";
+
+  useEffect(() => {
+    setShowDiff(false);
+  }, [currentLesson?.id]);
 
   const totalCharacters = currentLesson?.code.length ?? 0;
   const progressValue = typedCode.length;
@@ -360,6 +366,33 @@ export default function LessonPlayer({
                 <CodeDisplay code={currentLesson.code} />
               </div>
             </details>
+            <div className="rounded-xl border border-zinc-200 bg-white/70 p-4 text-sm text-zinc-600">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    정답 대비 코드 차이
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    힘들 때만 열어 보고, 직접 수정할 부분을 찾아 보세요.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDiff((prev) => !prev)}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600 transition hover:border-indigo-300 sm:mt-0"
+                >
+                  {showDiff ? "닫기" : "차이 보기"}
+                </button>
+              </div>
+              {showDiff && (
+                <div className="mt-4">
+                  <CodeDiffView
+                    expected={currentLesson.code}
+                    actual={typedCode}
+                  />
+                </div>
+              )}
+            </div>
             <CompletionNotice visible={isComplete} />
             {isComplete && currentIndex < lessons.length - 1 && (
               <button

@@ -1,5 +1,32 @@
 # typingScript 개발 로그
 
+## 2026-03-16 (7)
+
+### 작업 내용
+- LessonPlayer에 "정답 대비 코드 차이" 카드와 CodeDiffView 컴포넌트를 추가해 타이핑 중에도 정답과 입력 코드를 줄 단위로 비교·하이라이트할 수 있도록 하고, 레슨이 바뀌면 자동으로 접히도록 처리
+- ResultPreview iframe에 `console.log/info/warn/error` 가로채기 로직을 주입하고, 부모 컴포넌트에서 로그 패널·초기화 버튼·타임스탬프 표시를 제공해 JavaScript 레슨 디버깅 흐름을 개선
+- 기존 runtime/console 오류 패널과 연동해 코드 변경·미리보기 새로고침 시 오류·로그 상태가 함께 초기화되도록 정리
+
+### 변경 이유
+- 정답과의 차이를 즉시 확인해 스스로 수정해야 하는 부분을 빠르게 파악하게 하고, console 출력/오류 메시지를 한 화면 안에서 확인하도록 해 타이핑 학습 피드백을 강화하기 위함
+
+### 수정된 파일
+- app/components/CodeDiffView.tsx (신규)
+- app/components/LessonPlayer.tsx
+- app/components/ResultPreview.tsx
+- docs/dev-log-ko.md
+
+### 확인 방법
+- `npm run dev` 후 `/language/html` 레슨에서 Monaco 에디터 아래 "정답 대비 코드 차이" 버튼을 눌러 줄 단위 diff가 표시되고, 입력 변경 시 즉시 반영되는지 확인
+- JavaScript 레슨 코드에 `console.log('hello')` 혹은 의도적 오류를 넣고 레슨 완료 시 미리보기 하단 Console 패널에 로그가 쌓이고, Runtime/Console 오류 패널이 동시에 나타나는지 확인
+- "로그 지우기" 또는 "미리보기 새로고침"을 누르면 로그·오류 패널이 초기화되고 새 결과만 남는지 확인
+
+### 남은 과제
+- Diff 뷰가 줄 단위 비교만 제공하므로, 향후 문자 단위 하이라이트나 자동 수정 제안 등 추가 피드백을 연구할 필요가 있음
+
+### 다음 작업 제안
+- ExplanationPanel과 오류 메시지를 연동해 특정 오류 발생 시 해당 설명 카드가 자동 활성화되도록 연결하고, Console 로그 히스토리를 collapsible 리스트로 확장해 여러 오류를 순차적으로 복기할 수 있게 하기
+
 ## 2026-03-16 (6)
 
 ### 작업 내용
