@@ -98,9 +98,16 @@ export default function LanguageSelectionPage() {
                   className="glass-panel flex flex-col gap-2 p-4 text-left"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-zinc-900">
-                      {language.name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-zinc-900">
+                        {language.name}
+                      </p>
+                      {progress?.completed === progress?.total && progress?.total > 0 && (
+                        <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                          완료
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-zinc-500">
                       {lessons.length} lessons
                     </span>

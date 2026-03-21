@@ -4,7 +4,7 @@
 - `app/layout.tsx`: 글로벌 폰트와 메타데이터를 정의해 모든 페이지에 공통 레이아웃을 적용합니다.
 - `app/globals.css`: 라이트 테마 배경과 공통 카드(Glass) 스타일을 지정합니다.
 - `app/page.tsx`: 루트 랜딩 페이지로, "Hello typingScript" 문장을 입력하면 언어 선택 화면(`/language`)으로 이동합니다.
-- `app/language/page.tsx`: 언어 선택 페이지로 캐러셀과 입력 UI, 각 언어의 진행률/레슨 수/계속하기 버튼이 포함되어 있습니다.
+- `app/language/page.tsx`: 언어 선택 페이지로 캐러셀과 입력 UI, 각 언어 카드에 진행률 바와 "처음부터/계속하기" 버튼이 포함되어 있습니다.
 - `app/language/[languageId]/page.tsx`: 실제 레슨 화면을 담당하며 `LessonPlayer`, 진행 카드, 공유 버튼 및 "다음 언어로 이동" CTA를 렌더링합니다.
 - `app/components/LessonPlayer.tsx`: lesson 배열과 초기 인덱스를 받아 입력 상태, 진행률, 완료 여부를 관리하고, 진행 상황을 부모에 전달합니다.
 - `app/data/lessons.ts`: HTML/CSS/JavaScript/Python/Swift 각 10개 레슨 세트를 정의하고 `lessonSets`를 export합니다.

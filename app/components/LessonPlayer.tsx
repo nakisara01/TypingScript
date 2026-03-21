@@ -10,6 +10,7 @@ import ExplanationPanel from "./ExplanationPanel";
 import LessonNavigator from "./LessonNavigator";
 import CourseProgressSummary from "./CourseProgressSummary";
 import CourseCompletionSummary from "./CourseCompletionSummary";
+import CodeDisplay from "./CodeDisplay";
 
 type LessonPlayerProps = {
   lessons: Lesson[];
@@ -20,6 +21,7 @@ type LessonPlayerProps = {
     currentLessonId: string | null;
   }) => void;
   initialLessonIndex?: number;
+  editorLanguage?: string;
 };
 
 const STORAGE_KEY = "typingscript.lessonProgress";
@@ -28,6 +30,7 @@ export default function LessonPlayer({
   lessons,
   onProgressUpdate,
   initialLessonIndex = 0,
+  editorLanguage,
 }: LessonPlayerProps) {
   const [currentIndex, setCurrentIndex] = useState(() =>
     Math.min(Math.max(initialLessonIndex, 0), Math.max(lessons.length - 1, 0)),
@@ -239,7 +242,18 @@ export default function LessonPlayer({
         currentPosition={currentIndex + 1}
       />
 
-      {allCompleted && <CourseCompletionSummary lessons={lessons} />}
+      {allCompleted && (
+        <CourseCompletionSummary
+          lessons={lessons}
+          onRestart={handleRestartCourse}
+          onExit={() => onProgressUpdate?.({
+            completedCount,
+            total: lessons.length,
+            currentIndex,
+            currentLessonId: currentLesson?.id ?? null,
+          })}
+        />
+      )}
 
       <LessonNavigator
         lessons={lessons}
@@ -314,18 +328,38 @@ export default function LessonPlayer({
           </button>
         </div>
 
-        <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
+        <div className="space-y-4">
           <div
             className={`${
               mobilePanel === "editor" ? "block" : "hidden"
             } space-y-3 md:block`}
           >
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                Monaco Editor
+              </h3>
+              <p className="text-xs text-zinc-500">
+                아래 에디터에서 코드를 직접 타이핑하세요. 자동 완성과 들여쓰기가 지원됩니다.
+              </p>
+            </div>
             <TypingInput
               value={typedCode}
               onChange={handleChange}
               targetCode={currentLesson.code}
+              language={editorLanguage}
               disabled={isComplete}
             />
+            <details className="rounded-xl border border-zinc-200 bg-white/60 p-4 text-sm text-zinc-600">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                레슨 코드 참고하기
+              </summary>
+              <p className="mt-2 text-xs text-zinc-500">
+                필요할 때만 열어 보고, 가능한 한 직접 타이핑해 보세요.
+              </p>
+              <div className="mt-3">
+                <CodeDisplay code={currentLesson.code} />
+              </div>
+            </details>
             <CompletionNotice visible={isComplete} />
             {isComplete && currentIndex < lessons.length - 1 && (
               <button
@@ -359,7 +393,7 @@ export default function LessonPlayer({
           >
             <ResultPreview
               visible={isComplete}
-              html={currentLesson.expectedResult}
+              code={typedCode || currentLesson.code}
               placeholder="Complete the lesson to preview the page."
             />
           </div>

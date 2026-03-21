@@ -2,10 +2,14 @@ import { Lesson } from "../types/lesson";
 
 type CourseCompletionSummaryProps = {
   lessons: Lesson[];
+  onRestart?: () => void;
+  onExit?: () => void;
 };
 
 export default function CourseCompletionSummary({
   lessons,
+  onRestart,
+  onExit,
 }: CourseCompletionSummaryProps) {
   return (
     <section className="glass-soft border border-emerald-100/40 p-5 text-zinc-900">
@@ -31,6 +35,26 @@ export default function CourseCompletionSummary({
           </li>
         ))}
       </ol>
+      <div className="mt-4 flex flex-wrap gap-2 text-xs">
+        {onRestart && (
+          <button
+            type="button"
+            onClick={onRestart}
+            className="rounded-full border border-zinc-200 px-3 py-1 font-semibold text-zinc-700 transition hover:border-indigo-200"
+          >
+            다시 시작하기
+          </button>
+        )}
+        {onExit && (
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-full border border-zinc-200 px-3 py-1 font-semibold text-zinc-700 transition hover:border-indigo-200"
+          >
+            언어 선택으로 돌아가기
+          </button>
+        )}
+      </div>
     </section>
   );
 }

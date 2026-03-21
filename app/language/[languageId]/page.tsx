@@ -137,6 +137,7 @@ export default function LanguageLessonsPage({ params }: PageProps) {
           lessons={lessons}
           initialLessonIndex={initialLessonIndex}
           onProgressUpdate={handleProgressUpdate}
+          editorLanguage={language.id}
         />
 
         {nextLanguage &&

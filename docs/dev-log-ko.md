@@ -1,5 +1,81 @@
 # typingScript 개발 로그
 
+## 2026-03-16 (6)
+
+### 작업 내용
+- ResultPreview iframe에 실행 중 오류를 전파하는 스크립트를 주입해 `window.onerror`와 `console.error`를 감지하고, 부모 컴포넌트로 postMessage를 보낸 뒤 UI에 오류 패널을 표시하도록 구현
+- 미리보기를 새로고침하거나 코드가 바뀌면 이전 오류 상태가 자동으로 초기화되고, 오류가 있을 경우에는 타입(Runtime/Console)과 위치 정보를 함께 노출해 디버깅 단서를 제공
+
+### 변경 이유
+- 레슨을 완료했는데도 결과가 나오지 않을 때 학습자가 즉시 원인을 파악하고 수정할 수 있도록 피드백 루프를 단축하기 위함
+
+### 수정된 파일
+- app/components/ResultPreview.tsx
+- docs/dev-log-ko.md
+
+### 확인 방법
+- `npm run dev` 후 `/language/html` 레슨에서 의도적으로 `undefined` 변수를 참조하는 스크립트를 작성하고, 레슨 완료 시 미리보기 하단에 Runtime 오류 메시지가 나타나는지 확인
+- 오류 수정 후 "미리보기 새로고침" 버튼을 누르면 경고가 사라지고 정상 결과가 렌더링되는지 확인
+
+### 남은 과제
+- iframe에서 수집한 오류 메시지를 ExplanationPanel과 연동하거나, 여러 개의 오류 로그를 순차적으로 볼 수 있는 히스토리 UI가 필요
+
+### 다음 작업 제안
+- 사용자가 현재 입력 중인 코드와 정답 코드의 차이를 간단히 비교(diff)하는 기능을 설계해, 오류 메시지와 함께 보다 구체적인 가이드를 제공
+
+## 2026-03-16 (5)
+
+### 작업 내용
+- ResultPreview를 iframe 기반 샌드박스로 바꿔 사용자가 타이핑한 실제 코드를 렌더링하고, 새 탭 열기·미리보기 새로고침 조작을 추가
+- LessonPlayer가 Monaco 에디터 입력값을 미리보기로 전달하며, 완료된 레슨의 타이핑된 코드가 그대로 실행되도록 연결
+- Monaco 입력 영역을 명시적으로 안내하고, 레슨 정답 코드는 필요 시 열어 보는 레퍼런스로 이동시켜 입력 영역이 곧 Monaco임을 분명히 함
+- 페이지 입장 직후에도 Monaco 인라인 힌트가 자동으로 노출되도록 트리거를 추가해 첫 타자 전에 고스트 텍스트가 바로 보이게 조정
+
+### 변경 이유
+- 레슨을 완료했을 때 학습자가 직접 입력한 결과물을 즉시 확인하게 해 타이핑 경험의 보상을 높이기 위해
+
+### 수정된 파일
+- app/components/ResultPreview.tsx
+- app/components/LessonPlayer.tsx
+- docs/dev-log-ko.md
+
+### 확인 방법
+- `npm run dev` 후 `/language/html` 레슨을 완료하면 ResultPreview가 사용자가 입력한 코드로 렌더링되고 새 탭/새로고침 버튼이 동작하는지 확인
+- 같은 화면에서 입력 섹션이 Monaco Editor로만 구성되고, "레슨 코드 참고" 토글을 열었을 때만 정답 코드가 표시되는지 확인
+- 레슨 페이지에 진입하자마자 Monaco 에디터에 흐릿한 힌트 텍스트가 즉시 나타나는지 확인
+
+### 남은 과제
+- 샌드박스 미리보기에서 추가적인 보안 옵션(예: 콘솔 출력 보기, 오류 표시)을 노출해 학습 피드백을 강화할 필요가 있음
+
+### 다음 작업 제안
+- 결과 iframe에 오류 메시지를 캡처해 설명 패널과 연동하거나, 사용자가 원하는 경우 lesson 코드와 비교 diff를 제공하는 기능 설계
+
+## 2026-03-16 (4)
+
+### 작업 내용
+- TypingInput을 Monaco Editor 기반으로 교체하고 언어별 하이라이트, 자동 완성, 다중 커서를 지원하도록 구성
+- LessonPlayer에 타이핑할 레슨 코드를 별도 패널로 노출해 학습자가 참조하며 입력할 수 있도록 개선
+- 언어별 레슨 페이지에서 LessonPlayer에 에디터 언어 정보를 전달해 Monaco가 올바른 모드를 적용하도록 연결
+
+### 변경 이유
+- 초보자가 실제 IDE와 유사한 환경에서 연습하면서도 코드 참고 영역을 분리해 학습 집중도를 높이기 위해
+
+### 수정된 파일
+- app/components/TypingInput.tsx
+- app/components/LessonPlayer.tsx
+- app/language/[languageId]/page.tsx
+- docs/dev-log-ko.md
+
+### 확인 방법
+- `npm run dev` 실행 후 `/language/html`에 접속해 레슨 에디터가 Monaco UI로 표시되고 언어별 문법 하이라이트·자동 완성이 동작하는지 확인
+- 같은 화면에서 "타이핑할 코드" 패널의 내용을 참고하며 에디터에 동일한 코드를 입력했을 때 진행률이 업데이트되는지 확인
+
+### 남은 과제
+- ResultPreview가 여전히 Lesson 데이터의 `expectedResult`만 보여 주므로, 사용자가 입력한 실제 코드를 안전하게 렌더링하는 개선이 필요
+
+### 다음 작업 제안
+- Monaco 에디터에서 제출 시 정답 비교/자동 정렬 옵션을 추가하고, 미완성 상태에서 차이를 시각화하는 피드백 UI를 설계
+
 ## 2026-03-14 (18)
 
 ### 작업 내용
@@ -91,6 +167,29 @@
 
 ### 확인 방법
 - 언어 캐러셀에서 Python과 Swift 카드가 표시되고 Coming Soon 모달 안내가 정상 동작하는지 확인
+
+## 2026-03-16 (3)
+
+### 작업 내용
+- 언어 카드에 진행률 바와 "계속하기" 버튼을 추가해 각 언어의 학습 상태를 요약
+- 레슨 페이지 상단 카드에 레슨 수, 예상 소요, 추천 순서, 진행률을 함께 표시하고 모든 레슨을 완료하면 다음 언어로 이동하는 CTA를 노출
+- LessonPlayer 진행 정보를 `localStorage`에 저장/로드하여 `/language` 페이지와 레슨 페이지에서 공유 링크를 생성할 때 최신 인덱스를 사용
+
+### 변경 이유
+- 여러 언어 레슨을 오가며 학습할 때 현재 위치를 분명히 알리고 흐름을 자연스럽게 이어가도록 하기 위해
+
+### 수정된 파일
+- app/language/page.tsx
+- app/language/[languageId]/page.tsx
+- app/components/LessonPlayer.tsx
+- app/components/CourseCompletionSummary.tsx
+- app/lib/progress.ts
+- docs/codebase-overview-ko.md
+- docs/dev-log-ko.md
+
+### 확인 방법
+- `/language` 페이지에서 각 언어 카드에 진행률 바와 버튼이 표시되는지 확인
+- 언어 레슨을 마치면 다음 언어 CTA가 나타나는지, 카드 버튼으로 바로 이동할 수 있는지 확인
 
 ## 2026-03-16
 
