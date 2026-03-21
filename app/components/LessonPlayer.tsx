@@ -12,6 +12,7 @@ import CourseProgressSummary from "./CourseProgressSummary";
 import CourseCompletionSummary from "./CourseCompletionSummary";
 import CodeDisplay from "./CodeDisplay";
 import CodeDiffView from "./CodeDiffView";
+import { getExplanationKeywords } from "../data/explanationKeywords";
 
 type LessonPlayerProps = {
   lessons: Lesson[];
@@ -45,8 +46,9 @@ export default function LessonPlayer({
   const [mobilePanel, setMobilePanel] = useState<"editor" | "preview">("editor");
   const [showDiff, setShowDiff] = useState(false);
   const [autoExplanationHints, setAutoExplanationHints] = useState<
-    Record<string, string | null>
+    Record<string, AutoHintState>
   >({});
+  const [diffFocusLine, setDiffFocusLine] = useState<number | null>(null);
 
   useEffect(() => {
     if (hasHydrated) {
@@ -134,7 +136,9 @@ export default function LessonPlayer({
 
   useEffect(() => {
     setShowDiff(false);
+    setDiffFocusLine(null);
   }, [currentLesson?.id]);
+
 
   const totalCharacters = currentLesson?.code.length ?? 0;
   const progressValue = typedCode.length;
@@ -146,7 +150,7 @@ export default function LessonPlayer({
     }
     return (
       explanationSelections[currentLesson.id] ??
-      autoExplanationHints[currentLesson.id] ??
+      autoExplanationHints[currentLesson.id]?.id ??
       currentLesson.explanations[0]?.id ??
       null
     );
@@ -156,8 +160,48 @@ export default function LessonPlayer({
     if (!currentLesson) {
       return null;
     }
-    return autoExplanationHints[currentLesson.id] ?? null;
+    return autoExplanationHints[currentLesson.id]?.id ?? null;
   }, [currentLesson, autoExplanationHints]);
+
+  const hintedMessage = useMemo(() => {
+    if (!currentLesson) {
+      return null;
+    }
+    return autoExplanationHints[currentLesson.id]?.message ?? null;
+  }, [currentLesson, autoExplanationHints]);
+
+  const hintedKeywords = useMemo(() => {
+    if (!hintedExplanationId || !currentLesson) {
+      return [];
+    }
+    const explanation = currentLesson.explanations.find(
+      (item) => item.id === hintedExplanationId,
+    );
+    if (explanation?.keywords && explanation.keywords.length > 0) {
+      return explanation.keywords;
+    }
+    return getExplanationKeywords(hintedExplanationId);
+  }, [hintedExplanationId, currentLesson]);
+
+  const hintFocusLine = useMemo(() => {
+    if (!currentLesson) {
+      return null;
+    }
+    return autoExplanationHints[currentLesson.id]?.line ?? null;
+  }, [currentLesson, autoExplanationHints]);
+
+  useEffect(() => {
+    if (showDiff && hintFocusLine) {
+      setDiffFocusLine(hintFocusLine);
+    }
+  }, [showDiff, hintFocusLine]);
+
+  const firstMismatchLine = useMemo(() => {
+    if (!currentLesson) {
+      return null;
+    }
+    return computeFirstMismatchLine(currentLesson.code, typedCode);
+  }, [currentLesson, typedCode]);
 
   const handleChange = (value: string) => {
     if (!currentLesson) return;
@@ -173,10 +217,11 @@ export default function LessonPlayer({
       ...prev,
       [currentLesson.id]: explanationId,
     }));
-    setAutoExplanationHints((prev) => ({
-      ...prev,
-      [currentLesson.id]: null,
-    }));
+    setAutoExplanationHints((prev) => {
+      const next = { ...prev };
+      next[currentLesson.id] = { id: null, message: null, line: null };
+      return next;
+    });
   };
 
   const handleNextLesson = () => {
@@ -186,6 +231,31 @@ export default function LessonPlayer({
   const handleLessonSelect = (index: number) => {
     setCurrentIndex(() => Math.min(Math.max(index, 0), lessons.length - 1));
     setMobilePanel("editor");
+  };
+
+  const handleToggleDiffPanel = () => {
+    setShowDiff((prev) => {
+      const next = !prev;
+      if (!next) {
+        setDiffFocusLine(null);
+      } else if (hintFocusLine && !diffFocusLine) {
+        setDiffFocusLine(hintFocusLine);
+      }
+      return next;
+    });
+  };
+
+  const handleHintFocusRequest = () => {
+    setShowDiff(true);
+    if (hintFocusLine) {
+      setDiffFocusLine(hintFocusLine);
+    } else if (firstMismatchLine) {
+      setDiffFocusLine(firstMismatchLine);
+    }
+  };
+
+  const handleDiffFocusChange = (line: number | null) => {
+    setDiffFocusLine(line);
   };
 
   const handleRestartCourse = () => {
@@ -225,18 +295,22 @@ export default function LessonPlayer({
       setAutoExplanationHints((prev) => {
         const next = { ...prev };
         if (!message) {
-          next[currentLesson.id] = null;
+          next[currentLesson.id] = { id: null, message: null, line: null };
           return next;
         }
         const match = findExplanationByMessage(
           currentLesson.explanations,
           message,
         );
-        next[currentLesson.id] = match;
+        next[currentLesson.id] = {
+          id: match,
+          message,
+          line: firstMismatchLine,
+        };
         return next;
       });
     },
-    [currentLesson],
+    [currentLesson, firstMismatchLine],
   );
 
   const lessonStatuses = lessons.map((lesson, index) => {
@@ -419,7 +493,7 @@ export default function LessonPlayer({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowDiff((prev) => !prev)}
+                  onClick={handleToggleDiffPanel}
                   className="mt-2 inline-flex items-center justify-center rounded-full border border-indigo-200 px-3 py-1 text-xs font-semibold text-indigo-600 transition hover:border-indigo-300 sm:mt-0"
                 >
                   {showDiff ? "닫기" : "차이 보기"}
@@ -430,6 +504,8 @@ export default function LessonPlayer({
                   <CodeDiffView
                     expected={currentLesson.code}
                     actual={typedCode}
+                    focusLine={diffFocusLine}
+                    onFocusLineChange={handleDiffFocusChange}
                   />
                 </div>
               )}
@@ -481,10 +557,39 @@ export default function LessonPlayer({
           selectedId={activeExplanationId}
           onSelect={handleExplanationSelect}
           hintedId={hintedExplanationId}
+          hintMessage={hintedMessage}
+          hintKeywords={hintedKeywords}
+          hintLine={hintFocusLine ?? firstMismatchLine ?? null}
+          onFocusDiff={handleHintFocusRequest}
         />
       )}
     </section>
   );
+}
+
+type AutoHintState = {
+  id: string | null;
+  message: string | null;
+  line: number | null;
+};
+
+function computeFirstMismatchLine(
+  expected: string,
+  actual: string,
+): number | null {
+  const normalize = (value: string) => value.replace(/\r\n/g, "\n");
+  const expectedLines = normalize(expected).split("\n");
+  const actualLines = normalize(actual).split("\n");
+  const maxLength = Math.max(expectedLines.length, actualLines.length);
+
+  for (let index = 0; index < maxLength; index += 1) {
+    const expectedLine = expectedLines[index] ?? "";
+    const actualLine = actualLines[index] ?? "";
+    if (expectedLine !== actualLine) {
+      return index + 1;
+    }
+  }
+  return null;
 }
 
 function findExplanationByMessage(
@@ -495,7 +600,13 @@ function findExplanationByMessage(
   let bestMatch: { id: string; score: number } | null = null;
 
   explanations.forEach((explanation) => {
-    const keywords = extractKeywords(explanation);
+    const metadataKeywords =
+      (explanation.keywords && explanation.keywords.length > 0
+        ? explanation.keywords
+        : undefined) ?? getExplanationKeywords(explanation.id);
+    const keywords = metadataKeywords.length
+      ? metadataKeywords
+      : extractKeywords(explanation);
     let score = 0;
     keywords.forEach((keyword) => {
       if (!keyword) return;
@@ -514,6 +625,12 @@ function findExplanationByMessage(
 function extractKeywords(explanation: LessonExplanation): string[] {
   const tokens = new Set<string>();
   tokens.add(normalizeKeyword(explanation.label));
+
+  if (explanation.keywords && explanation.keywords.length > 0) {
+    explanation.keywords.forEach((keyword) =>
+      tokens.add(normalizeKeyword(keyword)),
+    );
+  }
 
   const inlineMatches = explanation.text.match(/`([^`]+)`/g) ?? [];
   inlineMatches.forEach((match) => {

@@ -5,6 +5,10 @@ type ExplanationPanelProps = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   hintedId?: string | null;
+  hintMessage?: string | null;
+  hintKeywords?: string[];
+  hintLine?: number | null;
+  onFocusDiff?: () => void;
 };
 
 export default function ExplanationPanel({
@@ -12,6 +16,10 @@ export default function ExplanationPanel({
   selectedId,
   onSelect,
   hintedId,
+  hintMessage,
+  hintKeywords = [],
+  hintLine,
+  onFocusDiff,
 }: ExplanationPanelProps) {
   const selected = items.find((item) => item.id === selectedId) ?? items[0];
   const isHintedActive = hintedId && selected && selected.id === hintedId;
@@ -61,6 +69,34 @@ export default function ExplanationPanel({
         </div>
         <p>{selected ? selected.text : "설명을 선택해 내용을 확인하세요."}</p>
       </div>
+      {isHintedActive && hintMessage && (
+        <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
+          <p className="font-semibold uppercase tracking-wide text-amber-600">
+            자동 힌트 가이드
+          </p>
+          <ol className="list-decimal space-y-1 pl-4">
+            <li>오류 메시지 확인: {hintMessage}</li>
+            {hintKeywords.length > 0 && (
+              <li>
+                다음 키워드를 중심으로 설명을 다시 읽어 보세요: {hintKeywords.join(", ")}
+              </li>
+            )}
+            <li>
+              Diff 뷰에서 해당 줄을 집중 모드로 열어 실제 코드와 비교해 보세요.
+              {hintLine && <span className="ml-1 font-semibold">({hintLine}행)</span>}
+            </li>
+          </ol>
+          {onFocusDiff && (
+            <button
+              type="button"
+              onClick={onFocusDiff}
+              className="mt-3 inline-flex items-center rounded-full border border-amber-300 px-3 py-1 font-semibold text-amber-800 transition hover:border-amber-400"
+            >
+              Diff에서 바로 보기
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }

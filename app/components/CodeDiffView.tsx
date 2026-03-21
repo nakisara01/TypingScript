@@ -1,10 +1,12 @@
 'use client';
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type CodeDiffViewProps = {
   expected: string;
   actual: string;
+  focusLine?: number | null;
+  onFocusLineChange?: (line: number | null) => void;
 };
 
 type DiffLine = {
@@ -14,9 +16,24 @@ type DiffLine = {
   status: "match" | "changed" | "missing" | "extra";
 };
 
-export default function CodeDiffView({ expected, actual }: CodeDiffViewProps) {
+export default function CodeDiffView({
+  expected,
+  actual,
+  focusLine,
+  onFocusLineChange,
+}: CodeDiffViewProps) {
   const [showOnlyChanges, setShowOnlyChanges] = useState(false);
-  const [focusedLine, setFocusedLine] = useState<number | null>(null);
+  const [focusedLine, setFocusedLine] = useState<number | null>(focusLine ?? null);
+
+  useEffect(() => {
+    if (typeof focusLine === "undefined") {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      setFocusedLine(focusLine ?? null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [focusLine]);
 
   const diffLines = useMemo<DiffLine[]>(() => {
     const normalize = (value: string) => value.replace(/\r\n/g, "\n");
@@ -88,7 +105,10 @@ export default function CodeDiffView({ expected, actual }: CodeDiffViewProps) {
         </button>
         <button
           type="button"
-          onClick={() => setFocusedLine(null)}
+          onClick={() => {
+            setFocusedLine(null);
+            onFocusLineChange?.(null);
+          }}
           disabled={!focusedLine}
           className="rounded-full border border-zinc-200 px-3 py-1 font-semibold text-zinc-600 transition hover:border-indigo-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -126,7 +146,11 @@ export default function CodeDiffView({ expected, actual }: CodeDiffViewProps) {
                   : null;
               const isFocused = focusedLine === line.line;
               const handleToggleFocus = () =>
-                setFocusedLine((prev) => (prev === line.line ? null : line.line));
+                setFocusedLine((prev) => {
+                  const next = prev === line.line ? null : line.line;
+                  onFocusLineChange?.(next);
+                  return next;
+                });
               return (
                 <div
                   key={line.line}

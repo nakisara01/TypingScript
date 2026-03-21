@@ -1,5 +1,60 @@
 # typingScript 개발 로그
 
+## 2026-03-16 (10)
+
+### 작업 내용
+- 모든 레슨 설명 ID에 대한 키워드를 `app/data/explanationKeywords.ts`로 확장하고, `app/data/lessons.ts`가 해당 키워드를 설명 객체에 자동 주입하도록 처리해 LessonPlayer가 정확한 매칭 정보를 바로 사용할 수 있게 함
+- LessonPlayer에 자동 힌트 상태를 메시지·키워드·추천 줄 번호까지 저장하는 구조를 도입하고, ExplanationPanel에서 "Diff에서 바로 보기" 버튼을 제공해 추천 줄을 즉시 하이라이트하도록 연결
+- CodeDiffView가 외부에서 줄 포커스를 제어할 수 있게 하고, 자동 힌트가 있을 때 Diff 뷰를 열어 같은 줄을 강조하거나, 집중 모드/차이만 보기 등을 함께 사용할 수 있도록 상태 동기화를 추가
+
+### 변경 이유
+- 오류 메시지를 기반으로 어떤 설명을 참고해야 하는지 구체적으로 안내하고, 추천된 설명을 확인한 뒤 바로 Diff 뷰에서 해당 줄을 비교하도록 동선을 단축하기 위함
+
+### 수정된 파일
+- app/types/lesson.ts
+- app/data/explanationKeywords.ts
+- app/data/lessons.ts
+- app/components/LessonPlayer.tsx
+- app/components/ExplanationPanel.tsx
+- app/components/CodeDiffView.tsx
+- docs/dev-log-ko.md
+
+### 확인 방법
+- `npm run dev` 후 `/language/javascript`에서 의도적으로 오타를 내 Runtime 오류를 발생시키면, ExplanationPanel에 자동 힌트 배지와 "Diff에서 바로 보기" 버튼이 나타나고 클릭 시 Diff 뷰가 열리며 추천 줄이 하이라이트되는지 확인
+- 같은 화면에서 키워드 맵이 없는 레슨(예: Python, Swift)에서도 힌트가 정상적으로 작동하며, Diff 뷰의 "선택 초기화" / "차이만 보기" 토글이 외부 포커스와 동기화되는지 확인
+
+### 남은 과제
+- 자동 힌트가 여러 줄을 추천하는 경우를 대비해 복수 줄 포커스나 히스토리 스택을 지원하고, 키워드 데이터가 레슨 파일에 직접 정의될 수 있도록 편집 워크플로를 정리할 필요가 있음
+
+### 다음 작업 제안
+- Console 로그 히스토리를 세션 단위로 저장해 실행 간 차이를 비교하거나, 자동 힌트 패널에서 추천 키워드 클릭 시 Monaco 에디터 내 해당 문자열을 탐색하는 기능을 추가해 수정 속도를 높이기
+
+## 2026-03-16 (9)
+
+### 작업 내용
+- Explanation 데이터를 공식 키워드 맵(`app/data/explanationKeywords.ts`)으로 확장하고 LessonPlayer의 자동 힌트 매칭 로직이 해당 키워드를 우선 사용하도록 수정
+- 자동 힌트가 발동되면 ExplanationPanel이 오류 메시지와 추천 키워드를 기반으로 단계별 가이드를 표시하고, LessonPlayer는 힌트 메시지를 저장·초기화하도록 상태 구조를 재정비
+- LessonExplanation 타입에 `keywords` 필드를 추가해 향후 레슨 데이터에서도 명시적으로 키워드를 선언할 수 있게 준비
+
+### 변경 이유
+- 오류 메시지와 설명을 더 정확히 연결하고, 추천된 설명을 열었을 때 구체적인 다음 행동(키워드 재확인, Diff 집중 모드 활용 등)을 안내하기 위함
+
+### 수정된 파일
+- app/types/lesson.ts
+- app/data/explanationKeywords.ts (신규)
+- app/components/LessonPlayer.tsx
+- app/components/ExplanationPanel.tsx
+
+### 확인 방법
+- `npm run dev` 후 JavaScript 레슨에서 `document.getElementById` 철자를 틀리게 입력하면 해당 오류 메시지가 ExplanationPanel을 자동으로 열고, 하단에 "자동 힌트 가이드" 박스가 나타나는지 확인
+- 같은 화면에서 다른 설명을 수동으로 선택하면 힌트 배지가 사라지고, 오류를 다시 내면 최신 메시지와 키워드가 반영되는지 확인
+
+### 남은 과제
+- Python/Swift 등 다른 언어 레슨에도 키워드 맵을 확장하고, 키워드 정의를 레슨 데이터 소스에서 바로 편집할 수 있는 구조로 이전할 필요가 있음
+
+### 다음 작업 제안
+- Console 로그 히스토리를 저장해 실행 간 비교를 지원하거나, 자동 힌트에서 제안한 키워드에 바로 이동하는 퀵 링크를 추가해 학습 동선을 단축하기
+
 ## 2026-03-16 (8)
 
 ### 작업 내용

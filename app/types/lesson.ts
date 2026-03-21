@@ -2,6 +2,7 @@ export type LessonExplanation = {
   id: string;
   label: string;
   text: string;
+  keywords?: string[];
 };
 
 export type Lesson = {

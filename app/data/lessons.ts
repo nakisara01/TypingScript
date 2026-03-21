@@ -1,4 +1,5 @@
 import { Lesson } from "../types/lesson";
+import explanationKeywords from "./explanationKeywords";
 
 const htmlLessons: Lesson[] = [
   { id: "H01", title: "Welcome Heading", description: "제목과 문단으로 첫 화면을 구성합니다.", code: `<h1>Hello, web!</h1>
@@ -325,6 +326,26 @@ Lesson(title: "Typing").start()`, expectedResult: `콘솔: Starting Typing`, exp
 let current: LessonType = .html
 print(current)`, expectedResult: `콘솔: html`, explanations: [{ id: "s10-enum", label: "enum", text: "열거형은 고정된 선택지를 정의합니다." }, { id: "s10-case", label: "case", text: "점 표기법으로 값을 참조합니다." }] },
 ];
+
+const lessonCollections = [
+  htmlLessons,
+  cssLessons,
+  javascriptLessons,
+  pythonLessons,
+  swiftLessons,
+];
+
+lessonCollections.forEach((collection) => {
+  collection.forEach((lesson) => {
+    lesson.explanations = lesson.explanations.map((explanation) => ({
+      ...explanation,
+      keywords:
+        explanation.keywords ??
+        explanationKeywords[explanation.id] ??
+        [],
+    }));
+  });
+});
 
 export const lessonSets: Record<string, Lesson[]> = {
   html: htmlLessons,
