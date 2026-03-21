@@ -4,14 +4,17 @@ type ExplanationPanelProps = {
   items: LessonExplanation[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  hintedId?: string | null;
 };
 
 export default function ExplanationPanel({
   items,
   selectedId,
   onSelect,
+  hintedId,
 }: ExplanationPanelProps) {
   const selected = items.find((item) => item.id === selectedId) ?? items[0];
+  const isHintedActive = hintedId && selected && selected.id === hintedId;
 
   return (
     <section className="glass-soft space-y-4 p-5 text-zinc-900">
@@ -20,6 +23,11 @@ export default function ExplanationPanel({
           Explanation
         </p>
         <h2 className="text-lg font-semibold">무엇을 배우고 있나요?</h2>
+        {isHintedActive && (
+          <p className="mt-1 text-xs text-indigo-500">
+            최근 오류를 기반으로 추천된 설명입니다.
+          </p>
+        )}
       </header>
       <div className="flex flex-col gap-3">
         {items.map((item) => {
@@ -35,6 +43,11 @@ export default function ExplanationPanel({
               {active && (
                 <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
                   선택됨
+                </span>
+              )}
+              {!active && hintedId === item.id && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                  힌트 추천
                 </span>
               )}
             </button>

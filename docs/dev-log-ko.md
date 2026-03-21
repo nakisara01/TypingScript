@@ -1,5 +1,32 @@
 # typingScript 개발 로그
 
+## 2026-03-16 (8)
+
+### 작업 내용
+- ResultPreview가 runtime/console 오류 메시지를 부모로 전달하면 LessonPlayer가 해당 메시지를 토큰화해 가장 관련 있는 설명 카드를 자동으로 열고, ExplanationPanel에는 "오류 기반 힌트" 배지를 표시하도록 연동
+- LessonPlayer에서 수동으로 설명을 선택하거나 레슨을 초기화하면 자동 힌트가 초기화되며, 로컬 상태로만 관리해 사용자가 직접 선택한 값이 항상 우선되도록 구성
+- CodeDiffView에 줄 필터(차이만 보기), 줄 집중 모드, 인라인 문자 단위 하이라이트를 추가해 긴 코드에서도 필요한 부분만 확대해 비교할 수 있게 개선
+
+### 변경 이유
+- 오류를 만났을 때 어떤 설명을 참고해야 하는지 즉시 안내하고, diff 비교도 필요한 구간만 좁혀 볼 수 있게 해 초보자가 스스로 문제를 해결하는 흐름을 강화하기 위함
+
+### 수정된 파일
+- app/components/ExplanationPanel.tsx
+- app/components/LessonPlayer.tsx
+- app/components/ResultPreview.tsx
+- app/components/CodeDiffView.tsx
+- docs/dev-log-ko.md
+
+### 확인 방법
+- `npm run dev` 후 JavaScript 레슨에서 의도적으로 DOM 관련 오류를 내면 ExplanationPanel에서 해당 주제 카드가 자동으로 열리고, 배지에 "오류 기반 힌트" 문구가 표시되는지 확인
+- 같은 화면에서 diff 카드의 "차이만 보기" 토글과 줄 번호 뱃지를 눌러 특정 줄만 표시되며, 변경된 줄은 문자 단위로 노란색 하이라이트가 적용되는지 확인
+
+### 남은 과제
+- 오류 메시지와 설명 매칭 로직이 간단한 키워드 기반이므로, 추후 레슨 데이터에 명시적인 `keywords` 메타데이터를 추가해 정확도를 높일 필요가 있음
+
+### 다음 작업 제안
+- Console 로그를 히스토리 형태로 저장해 실행 간 차이를 비교하거나, ExplanationPanel에 오류 해결 단계를 순차적으로 안내하는 멀티 단계 힌트를 도입
+
 ## 2026-03-16 (7)
 
 ### 작업 내용

@@ -6,6 +6,7 @@ type ResultPreviewProps = {
   visible: boolean;
   code: string;
   placeholder: string;
+  onHint?: (message: string | null) => void;
 };
 
 type ConsoleLogEntry = {
@@ -19,6 +20,7 @@ export default function ResultPreview({
   visible,
   code,
   placeholder,
+  onHint,
 }: ResultPreviewProps) {
   const [reloadKey, setReloadKey] = useState(0);
   const [runtimeEvent, setRuntimeEvent] = useState<
@@ -155,6 +157,11 @@ export default function ResultPreview({
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+
+  useEffect(() => {
+    if (!onHint) return;
+    onHint(runtimeEvent?.message ?? null);
+  }, [runtimeEvent, onHint]);
 
   const handleOpenNewTab = useCallback(() => {
     if (!visible) return;

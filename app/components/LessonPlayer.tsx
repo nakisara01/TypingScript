@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import TypingInput from "./TypingInput";
 import ProgressIndicator from "./ProgressIndicator";
 import CompletionNotice from "./CompletionNotice";
 import ResultPreview from "./ResultPreview";
-import { Lesson } from "../types/lesson";
+import { Lesson, LessonExplanation } from "../types/lesson";
 import ExplanationPanel from "./ExplanationPanel";
 import LessonNavigator from "./LessonNavigator";
 import CourseProgressSummary from "./CourseProgressSummary";
@@ -44,6 +44,9 @@ export default function LessonPlayer({
   const [lastSavedTime, setLastSavedTime] = useState<number | null>(null);
   const [mobilePanel, setMobilePanel] = useState<"editor" | "preview">("editor");
   const [showDiff, setShowDiff] = useState(false);
+  const [autoExplanationHints, setAutoExplanationHints] = useState<
+    Record<string, string | null>
+  >({});
 
   useEffect(() => {
     if (hasHydrated) {
@@ -143,10 +146,18 @@ export default function LessonPlayer({
     }
     return (
       explanationSelections[currentLesson.id] ??
+      autoExplanationHints[currentLesson.id] ??
       currentLesson.explanations[0]?.id ??
       null
     );
-  }, [currentLesson, explanationSelections]);
+  }, [currentLesson, explanationSelections, autoExplanationHints]);
+
+  const hintedExplanationId = useMemo(() => {
+    if (!currentLesson) {
+      return null;
+    }
+    return autoExplanationHints[currentLesson.id] ?? null;
+  }, [currentLesson, autoExplanationHints]);
 
   const handleChange = (value: string) => {
     if (!currentLesson) return;
@@ -161,6 +172,10 @@ export default function LessonPlayer({
     setExplanationSelections((prev) => ({
       ...prev,
       [currentLesson.id]: explanationId,
+    }));
+    setAutoExplanationHints((prev) => ({
+      ...prev,
+      [currentLesson.id]: null,
     }));
   };
 
@@ -179,6 +194,7 @@ export default function LessonPlayer({
     }
     setTypedEntries({});
     setExplanationSelections({});
+    setAutoExplanationHints({});
     setCurrentIndex(0);
     setMobilePanel("editor");
   };
@@ -195,8 +211,33 @@ export default function LessonPlayer({
       delete clone[currentLesson.id];
       return clone;
     });
+    setAutoExplanationHints((prev) => {
+      const clone = { ...prev };
+      delete clone[currentLesson.id];
+      return clone;
+    });
     setMobilePanel("editor");
   };
+
+  const handleHintSuggestion = useCallback(
+    (message: string | null) => {
+      if (!currentLesson) return;
+      setAutoExplanationHints((prev) => {
+        const next = { ...prev };
+        if (!message) {
+          next[currentLesson.id] = null;
+          return next;
+        }
+        const match = findExplanationByMessage(
+          currentLesson.explanations,
+          message,
+        );
+        next[currentLesson.id] = match;
+        return next;
+      });
+    },
+    [currentLesson],
+  );
 
   const lessonStatuses = lessons.map((lesson, index) => {
     const typedValue = typedEntries[lesson.id] ?? "";
@@ -428,6 +469,7 @@ export default function LessonPlayer({
               visible={isComplete}
               code={typedCode || currentLesson.code}
               placeholder="Complete the lesson to preview the page."
+              onHint={handleHintSuggestion}
             />
           </div>
         </div>
@@ -438,8 +480,60 @@ export default function LessonPlayer({
           items={currentLesson.explanations}
           selectedId={activeExplanationId}
           onSelect={handleExplanationSelect}
+          hintedId={hintedExplanationId}
         />
       )}
     </section>
   );
+}
+
+function findExplanationByMessage(
+  explanations: LessonExplanation[],
+  message: string,
+): string | null {
+  const normalizedMessage = message.toLowerCase();
+  let bestMatch: { id: string; score: number } | null = null;
+
+  explanations.forEach((explanation) => {
+    const keywords = extractKeywords(explanation);
+    let score = 0;
+    keywords.forEach((keyword) => {
+      if (!keyword) return;
+      if (normalizedMessage.includes(keyword)) {
+        score += keyword.length >= 4 ? 2 : 1;
+      }
+    });
+    if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { id: explanation.id, score };
+    }
+  });
+
+  return bestMatch?.id ?? null;
+}
+
+function extractKeywords(explanation: LessonExplanation): string[] {
+  const tokens = new Set<string>();
+  tokens.add(normalizeKeyword(explanation.label));
+
+  const inlineMatches = explanation.text.match(/`([^`]+)`/g) ?? [];
+  inlineMatches.forEach((match) => {
+    const trimmed = match.replace(/`/g, "");
+    tokens.add(normalizeKeyword(trimmed));
+  });
+
+  explanation.text.split(/\s+/).forEach((word) => {
+    const cleaned = normalizeKeyword(word);
+    if (cleaned.length >= 4) {
+      tokens.add(cleaned);
+    }
+  });
+
+  return Array.from(tokens).filter(Boolean);
+}
+
+function normalizeKeyword(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣<>#./-]/g, "")
+    .trim();
 }
