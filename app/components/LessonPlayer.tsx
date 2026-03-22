@@ -142,7 +142,9 @@ export default function LessonPlayer({
 
   const totalCharacters = currentLesson?.code.length ?? 0;
   const progressValue = typedCode.length;
-  const isComplete = currentLesson ? typedCode === currentLesson.code : false;
+  const isComplete = currentLesson
+    ? codesMatch(typedCode, currentLesson.code)
+    : false;
 
   const activeExplanationId = useMemo(() => {
     if (!currentLesson) {
@@ -653,4 +655,17 @@ function normalizeKeyword(input: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9가-힣<>#./-]/g, "")
     .trim();
+}
+
+function normalizeCode(value: string): string {
+  return value
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .join("\n")
+    .trim();
+}
+
+function codesMatch(a: string, b: string): boolean {
+  return normalizeCode(a) === normalizeCode(b);
 }
